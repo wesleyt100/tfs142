@@ -1,4 +1,4 @@
-name: Build Windows (TFS)
+name: Build Windows (Ninja VCPKG)
 
 on:
   workflow_dispatch:
@@ -7,16 +7,18 @@ on:
     paths:
       - "src/**"
       - "CMakeLists.txt"
+      - "CMakePresets.json"
       - "vcpkg.json"
-      - ".github/workflows/build-windows.yml"
+      - ".github/workflows/build-windows-ninja.yml"
 
 jobs:
   build:
-    name: Windows Build (Release)
+    name: Build Release (Ninja)
     runs-on: windows-2022
 
     env:
-      # x64-windows = Dinâmico. Gera .exe + .dlls (Mais estável para LuaJIT/MariaDB)
+      # Define que queremos bibliotecas dinâmicas (DLLs) para Windows
+      # Isso evita erros de linker comuns com LuaJIT e MariaDB
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
     steps:
@@ -28,60 +30,58 @@ jobs:
       - name: Instalar CMake e Ninja
         uses: lukka/get-cmake@latest
 
-      # Configura o vcpkg para ler o vcpkg.json que criamos acima
       - name: Configurar VCPKG
         uses: lukka/run-vcpkg@v11
         with:
+          # O script vai ler o arquivo vcpkg.json que criamos acima
           vcpkgJsonGlob: 'vcpkg.json'
 
-      - name: Configurar CMake
-        shell: pwsh
-        run: |
-          # Cria pasta de build
-          cmake -S . -B build -G "Ninja" `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-
-      - name: Compilar (Build)
-        shell: pwsh
-        run: |
-          cmake --build build --config Release --parallel
+      - name: Compilar com CMake Presets
+        uses: lukka/run-cmake@v10
+        with:
+          # AQUI está o segredo: Usamos o nome exato que está no seu CMakePresets.json
+          configurePreset: 'ninja-vcpkg'
+          buildPreset: 'ninja-vcpkg'
+          
+          # Forçamos o tipo Release para otimizar o servidor
+          configurePresetAdditionalArgs: "['-DCMAKE_BUILD_TYPE=Release']"
 
       - name: Preparar Artefatos (EXE + DLLs)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts"
           
-          Write-Host "--- Procurando Executável ---"
-          # Procura o tfs.exe na pasta build (recursivo)
-          $exe = Get-ChildItem -Path "build" -Filter "tfs.exe" -Recurse | Select-Object -First 1
+          # O preset define o diretório de build como "build"
+          $buildDir = "build"
+
+          Write-Host "--- Procurando tfs.exe ---"
+          $exe = Get-ChildItem -Path $buildDir -Filter "tfs.exe" -Recurse | Select-Object -First 1
           
           if ($exe) {
             Write-Host "Executável encontrado: $($exe.FullName)"
             Copy-Item $exe.FullName -Destination "artifacts/"
           } else {
-            Write-Error "ERRO: tfs.exe não gerado!"
+            Write-Error "ERRO CRÍTICO: tfs.exe não encontrado na pasta $buildDir!"
             exit 1
           }
 
           Write-Host "--- Copiando DLLs necessárias ---"
-          # Copia todas as DLLs geradas pelo VCPKG (libmariadb.dll, lua51.dll, etc)
-          # Exclui pastas de debug para economizar espaço
-          $dlls = Get-ChildItem -Path "build" -Filter "*.dll" -Recurse
+          # No modo Preset com Ninja, as DLLs costumam ficar na pasta raiz do build ou subpastas
+          $dlls = Get-ChildItem -Path $buildDir -Filter "*.dll" -Recurse
           
           foreach ($dll in $dlls) {
-            if ($dll.DirectoryName -notmatch "debug" -and $dll.DirectoryName -notmatch "CMakeFiles") {
-               Write-Host "Copiando DLL: $($dll.Name)"
+            # Evita copiar DLLs de teste ou temporárias do CMake
+            if ($dll.DirectoryName -notmatch "CMakeFiles" -and $dll.DirectoryName -notmatch "test") {
+               Write-Host "Copiando: $($dll.Name)"
                Copy-Item $dll.FullName -Destination "artifacts/" -Force
             }
           }
-          
-          # Copia a pasta data ou config se necessário (Opcional - Remova se não precisar)
+
+          # Copia config.lua se existir (opcional)
           if (Test-Path "config.lua") { Copy-Item "config.lua" -Destination "artifacts/" }
 
       - name: Upload do Download
         uses: actions/upload-artifact@v4
         with:
-          name: tfs-windows-release
+          name: tfs-windows-ninja
           path: artifacts/*
