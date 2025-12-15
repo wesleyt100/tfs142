@@ -1,0 +1,69 @@
+The Forgotten Server - Version 1.4.2
+
+Compiled with Microsoft Visual C++ version 1942
+Compiled on Jul 23 2025 22:47:21 for platform x64
+Linked with LuaJIT 2.1.0-beta3 for Lua support
+
+A server developed by The Forgotten Server Team
+Visit our forum for updates, support, and resources: https://otland.net/.
+
+>> Loading config
+>> Loading RSA key 
+>> Establishing database connection... MySQL 3.4.1
+>> Running database manager
+>> Loading vocations
+>> Loading items
+>> Loading script systems
+>> Loading lua libs
+[Warning - Spell::configureSpell] Wrong vocation name: Sorcerer
+[Warning - Spell::configureSpell] Wrong vocation name: Sorcerer
+[Warning - Spell::configureSpell] Wrong vocation name: sorcerer
+[Warning - Spell::configureSpell] Wrong vocation name: sorcerer
+[Warning - Spell::configureSpell] Wrong vocation name: sorcerer
+[Warning - Spell::configureSpell] Wrong vocation name: sorcerer
+[Warning - Spells::registerEvent] Duplicate registered rune with id: 2418
+[Error - CreatureEvent::configureEvent] Invalid type for creature event: EnchantLook
+[Warning - BaseEvents::loadFromXml] Failed to configure event
+>> Loading lua scripts
+>> Loading monsters
+>> Loading lua monsters
+>> Loading outfits
+>> Checking world type... PVP
+>> Loading map
+> Map size: 2457x2048.
+> Map loading time: 3.023 seconds.
+[Warning - Spawns::loadFromXml] Ice Troll Lancer ( 02246 / 00797 / 004 ) spawntime can not be less than 10 seconds.
+[Warning - Spawns::loadFromXml] Desert Spider ( 00985 / 01377 / 005 ) spawntime can not be less than 10 seconds.
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 01200 / 01529 / 005 ) with radius: 1.
+[Warning - Monsters::deserializeSpell] Ice Troll Spellmaster - Unknown shootEffect: small ice
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 02244 / 00796 / 006 ) with radius: 1.
+[Warning - Spawns::loadFromXml] Yeti ( 02222 / 00826 / 006 ) spawntime can not be more than 86400 seconds.
+[Warning - Monsters::deserializeSpell] Pharaoh - Unknown areaEffect: wraps
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 02196 / 01383 / 006 ) with radius: 1.
+[Warning - Spawns::loadFromXml] Caiman ( 02006 / 01391 / 006 ) spawntime can not be more than 86400 seconds.
+[Warning - Spawns::loadFromXml] Caiman ( 02206 / 01474 / 006 ) spawntime can not be more than 86400 seconds.
+[Warning - Spawns::loadFromXml] Sacred Elemental ( 01230 / 01602 / 006 ) spawntime can not be less than 10 seconds.
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 02249 / 00805 / 007 ) with radius: 1.
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 02279 / 01437 / 007 ) with radius: 1.
+[Warning - Monsters::deserializeSpell] Fire Elemental - Unknown areaEffect: ENERGYHIT
+[Warning - Monsters::loadMonster] Cant load loot. data/monster/monsters/Fire elemental.xml
+[Warning - Monsters::deserializeSpell] Energy Elemental - Unknown shootEffect: icearea
+[Warning - Monsters::deserializeSpell] poison elemental - Unknown areaEffect: ENERGYHIT
+[Warning - Monsters::loadMonster] Cant load loot. data/monster/monsters/Poison elemental.xml
+[Warning - Monsters::deserializeSpell] ice elemental - Unknown areaEffect: ENERGYHIT
+[Warning - Monsters::loadMonster] Cant load loot. data/monster/monsters/Ice elemental.xml
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 01034 / 01195 / 010 ) with radius: 1.
+[Warning - Monsters::loadMonster] Cant load loot. data/monster/monsters/beholder.xml
+[Warning - Monsters::loadMonster] Cant load loot. data/monster/monsters/elite beholder.xml
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 01068 / 01019 / 011 ) with radius: 1.
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 01067 / 01021 / 011 ) with radius: 1.
+[Warning - Spawns::loadFromXml] Vagalume ( 01152 / 01300 / 011 ) spawntime can not be less than 10 seconds.
+[Warning - Spawns::loadFromXml] Empty spawn at position: ( 01167 / 01399 / 011 ) with radius: 1.
+[Warning - Spawns::loadFromXml] Poison Spider ( 01177 / 00687 / 014 ) spawntime can not be more than 86400 seconds.
+>> Initializing gamestate
+[Warning - Spawns::startup] Couldn't spawn monster "" on position: ( 01435 / 01303 / 013 ).
+[Warning - Spawns::startup] Couldn't spawn monster "" on position: ( 01435 / 01303 / 013 ).
+>> Loaded all modules, server starting up...
+>> Tiberion Server Online!
+
+Tofame has logged in.

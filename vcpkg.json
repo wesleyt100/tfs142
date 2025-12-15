@@ -1,0 +1,13 @@
+{
+  "name": "tfs-dependencies",
+  "version": "1.0.0",
+  "dependencies": [
+    "boost-system",
+    "boost-iostreams",
+    "cryptopp",
+    "fmt",
+    "libmariadb",
+    "luajit",
+    "pugixml"
+  ]
+}
