@@ -1,0 +1,87 @@
+name: Build Windows (TFS)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "src/**"
+      - "CMakeLists.txt"
+      - "vcpkg.json"
+      - ".github/workflows/build-windows.yml"
+
+jobs:
+  build:
+    name: Windows Build (Release)
+    runs-on: windows-2022
+
+    env:
+      # x64-windows = Dinâmico. Gera .exe + .dlls (Mais estável para LuaJIT/MariaDB)
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Instalar CMake e Ninja
+        uses: lukka/get-cmake@latest
+
+      # Configura o vcpkg para ler o vcpkg.json que criamos acima
+      - name: Configurar VCPKG
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+
+      - name: Configurar CMake
+        shell: pwsh
+        run: |
+          # Cria pasta de build
+          cmake -S . -B build -G "Ninja" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Compilar (Build)
+        shell: pwsh
+        run: |
+          cmake --build build --config Release --parallel
+
+      - name: Preparar Artefatos (EXE + DLLs)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "artifacts"
+          
+          Write-Host "--- Procurando Executável ---"
+          # Procura o tfs.exe na pasta build (recursivo)
+          $exe = Get-ChildItem -Path "build" -Filter "tfs.exe" -Recurse | Select-Object -First 1
+          
+          if ($exe) {
+            Write-Host "Executável encontrado: $($exe.FullName)"
+            Copy-Item $exe.FullName -Destination "artifacts/"
+          } else {
+            Write-Error "ERRO: tfs.exe não gerado!"
+            exit 1
+          }
+
+          Write-Host "--- Copiando DLLs necessárias ---"
+          # Copia todas as DLLs geradas pelo VCPKG (libmariadb.dll, lua51.dll, etc)
+          # Exclui pastas de debug para economizar espaço
+          $dlls = Get-ChildItem -Path "build" -Filter "*.dll" -Recurse
+          
+          foreach ($dll in $dlls) {
+            if ($dll.DirectoryName -notmatch "debug" -and $dll.DirectoryName -notmatch "CMakeFiles") {
+               Write-Host "Copiando DLL: $($dll.Name)"
+               Copy-Item $dll.FullName -Destination "artifacts/" -Force
+            }
+          }
+          
+          # Copia a pasta data ou config se necessário (Opcional - Remova se não precisar)
+          if (Test-Path "config.lua") { Copy-Item "config.lua" -Destination "artifacts/" }
+
+      - name: Upload do Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfs-windows-release
+          path: artifacts/*
