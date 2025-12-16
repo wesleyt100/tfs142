@@ -16,9 +16,10 @@ jobs:
     name: Build Release (Ninja)
     runs-on: windows-2022
 
-    # Variáveis de ambiente
     env:
+      # Triplet para bibliotecas Windows
       VCPKG_DEFAULT_TRIPLET: x64-windows
+      # Força compatibilidade SSE2
       VCPKG_CXX_FLAGS: "/arch:SSE2"
       VCPKG_C_FLAGS: "/arch:SSE2"
 
@@ -31,17 +32,24 @@ jobs:
       - name: Instalar CMake e Ninja
         uses: lukka/get-cmake@latest
 
-      - name: Clonar vcpkg manualmente
+      - name: Instalar vcpkg baseado no builtin-baseline
         run: |
+          echo "Buscando SHA do builtin-baseline no vcpkg.json..."
+          $baseline = (Get-Content vcpkg.json | ConvertFrom-Json)."builtin-baseline"
+          if (-not $baseline) {
+            Write-Error "builtin-baseline não encontrado em vcpkg.json!"
+            exit 1
+          }
+          Write-Host "Usando baseline: $baseline"
+          
           git clone https://github.com/microsoft/vcpkg.git vcpkg
           cd vcpkg
-          # Substitua pelo seu builtin-baseline do vcpkg.json
-          git checkout a42c6c9e9d9a6e1f3c7d1f5f5b7c4e7d9a6e2c4b
+          git checkout $baseline
 
-      - name: Configurar VCPKG
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgJsonGlob: 'vcpkg.json'
+      - name: Instalar pacotes via vcpkg
+        run: |
+          ./vcpkg/bootstrap-vcpkg.bat
+          ./vcpkg/vcpkg install --triplet x64-windows
 
       - name: Compilar com CMake Presets
         uses: lukka/run-cmake@v10
@@ -54,32 +62,30 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts"
-          
           $buildDir = "build"
+
           Write-Host "--- Procurando tfs.exe ---"
           $exe = Get-ChildItem -Path $buildDir -Filter "tfs.exe" -Recurse | Select-Object -First 1
-          
           if ($exe) {
-            Write-Host "Executável encontrado: $($exe.FullName)"
             Copy-Item $exe.FullName -Destination "artifacts/"
           } else {
-            Write-Error "ERRO CRÍTICO: tfs.exe não encontrado na pasta $buildDir!"
+            Write-Error "tfs.exe não encontrado!"
             exit 1
           }
 
-          Write-Host "--- Copiando DLLs necessárias ---"
+          Write-Host "--- Copiando DLLs ---"
           $dlls = Get-ChildItem -Path $buildDir -Filter "*.dll" -Recurse
-          
           foreach ($dll in $dlls) {
             if ($dll.DirectoryName -notmatch "CMakeFiles" -and $dll.DirectoryName -notmatch "test") {
-               Write-Host "Copiando: $($dll.Name)"
-               Copy-Item $dll.FullName -Destination "artifacts/" -Force
+              Copy-Item $dll.FullName -Destination "artifacts/" -Force
             }
           }
 
-          if (Test-Path "config.lua") { Copy-Item "config.lua" -Destination "artifacts/" }
+          if (Test-Path "config.lua") {
+            Copy-Item "config.lua" -Destination "artifacts/"
+          }
 
-      - name: Upload do Download
+      - name: Upload do Artefato
         uses: actions/upload-artifact@v4
         with:
           name: tfs-windows-ninja
