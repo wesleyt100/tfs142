@@ -1,6 +1,7 @@
 {
-  "name": "tfs-dependencies",
+  "name": "tfs-build",
   "version": "1.0.0",
+  "builtin-baseline": "c8c4d9f0c8a4d2e63f1c9d4d63c0a5b6e7f8a9b0",
   "dependencies": [
     "boost-system",
     "boost-iostreams",
