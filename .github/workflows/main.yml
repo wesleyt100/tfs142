@@ -17,9 +17,9 @@ jobs:
     runs-on: windows-2022
 
     env:
-      # Define que queremos bibliotecas dinâmicas (DLLs) para Windows
-      # Isso evita erros de linker comuns com LuaJIT e MariaDB
       VCPKG_DEFAULT_TRIPLET: x64-windows
+      VCPKG_CXX_FLAGS: "/arch:SSE2"
+      VCPKG_C_FLAGS: "/arch:SSE2"
 
     steps:
       - name: Checkout do Código
@@ -33,56 +33,44 @@ jobs:
       - name: Configurar VCPKG
         uses: lukka/run-vcpkg@v11
         with:
-          # O script vai ler o arquivo vcpkg.json que criamos acima
           vcpkgJsonGlob: 'vcpkg.json'
 
       - name: Compilar com CMake Presets
         uses: lukka/run-cmake@v10
         with:
-          # AQUI está o segredo: Usamos o nome exato que está no seu CMakePresets.json
           configurePreset: 'ninja-vcpkg'
           buildPreset: 'ninja-vcpkg'
-          
-          # Forçamos o tipo Release para otimizar o servidor
           configurePresetAdditionalArgs: -DCMAKE_BUILD_TYPE=Release
-    env:
-  VCPKG_DEFAULT_TRIPLET: x64-windows
-  VCPKG_CXX_FLAGS: "/arch:SSE2"
-  VCPKG_C_FLAGS: "/arch:SSE2"
 
       - name: Preparar Artefatos (EXE + DLLs)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "artifacts"
-          
-          # O preset define o diretório de build como "build"
-          $buildDir = "build"
 
+          $buildDir = "build"
           Write-Host "--- Procurando tfs.exe ---"
           $exe = Get-ChildItem -Path $buildDir -Filter "tfs.exe" -Recurse | Select-Object -First 1
-          
+
           if ($exe) {
             Write-Host "Executável encontrado: $($exe.FullName)"
             Copy-Item $exe.FullName -Destination "artifacts/"
           } else {
-            Write-Error "ERRO CRÍTICO: tfs.exe não encontrado na pasta $buildDir!"
+            Write-Error "ERRO CRÍTICO: tfs.exe não encontrado!"
             exit 1
           }
 
           Write-Host "--- Copiando DLLs necessárias ---"
-          # No modo Preset com Ninja, as DLLs costumam ficar na pasta raiz do build ou subpastas
           $dlls = Get-ChildItem -Path $buildDir -Filter "*.dll" -Recurse
-          
+
           foreach ($dll in $dlls) {
-            # Evita copiar DLLs de teste ou temporárias do CMake
             if ($dll.DirectoryName -notmatch "CMakeFiles" -and $dll.DirectoryName -notmatch "test") {
-               Write-Host "Copiando: $($dll.Name)"
-               Copy-Item $dll.FullName -Destination "artifacts/" -Force
+              Copy-Item $dll.FullName -Destination "artifacts/" -Force
             }
           }
 
-          # Copia config.lua se existir (opcional)
-          if (Test-Path "config.lua") { Copy-Item "config.lua" -Destination "artifacts/" }
+          if (Test-Path "config.lua") {
+            Copy-Item "config.lua" -Destination "artifacts/"
+          }
 
       - name: Upload do Download
         uses: actions/upload-artifact@v4
