@@ -44,7 +44,11 @@ jobs:
           buildPreset: 'ninja-vcpkg'
           
           # Forçamos o tipo Release para otimizar o servidor
-          configurePresetAdditionalArgs: "['-DCMAKE_BUILD_TYPE=Release']"
+          configurePresetAdditionalArgs: -DCMAKE_BUILD_TYPE=Release
+    env:
+  VCPKG_DEFAULT_TRIPLET: x64-windows
+  VCPKG_CXX_FLAGS: "/arch:SSE2"
+  VCPKG_C_FLAGS: "/arch:SSE2"
 
       - name: Preparar Artefatos (EXE + DLLs)
         shell: pwsh
